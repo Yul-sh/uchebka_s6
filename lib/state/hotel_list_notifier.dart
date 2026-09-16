@@ -1,0 +1,78 @@
+import 'package:flutter/foundation.dart';
+
+import '../core/api_exceptions.dart';
+import '../models/hotel.dart';
+import '../models/hotel_query.dart';
+import '../models/page_result.dart';
+import '../repositories/hotel_repository.dart';
+import 'load_status.dart';
+
+class HotelListNotifier extends ChangeNotifier {
+  final HotelRepository _repository;
+
+  HotelListNotifier(this._repository);
+
+  HotelQuery _query = const HotelQuery();
+  PageResult<Hotel> _result = PageResult.empty();
+  LoadStatus _status = LoadStatus.idle;
+  String? _error;
+  final Set<int> _selected = {};
+
+  HotelQuery get query => _query;
+  PageResult<Hotel> get result => _result;
+  LoadStatus get status => _status;
+  String? get error => _error;
+  Set<int> get selected => Set.unmodifiable(_selected);
+  bool get hasSelection => _selected.isNotEmpty;
+
+  Future<void> load() async {
+    _status = LoadStatus.loading;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _result = await _repository.find(_query);
+      _status = LoadStatus.success;
+    } on RequestCancelledException {
+      return;
+    } catch (e) {
+      _error = loadErrorMessage(e);
+      _status = LoadStatus.error;
+    }
+    notifyListeners();
+  }
+
+  Future<void> applyQuery(HotelQuery next) async {
+    if (next != _query) _selected.clear();
+    _query = next;
+    await load();
+  }
+
+  void toggleSelection(int id) {
+    _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
+    notifyListeners();
+  }
+
+  Future<void> deleteSelected() async {
+    await _repository.deleteMany(_selected.toList());
+    _selected.clear();
+    await load();
+  }
+
+  Future<void> softDelete(int id) async {
+    await _repository.softDelete(id);
+    _selected.remove(id);
+    await load();
+  }
+
+  Future<void> hardDelete(int id) async {
+    await _repository.hardDelete(id);
+    _selected.remove(id);
+    await load();
+  }
+
+  Future<void> restore(int id) async {
+    await _repository.restore(id);
+    await load();
+  }
+}

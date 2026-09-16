@@ -1,0 +1,25 @@
+name: fly_y
+description: "Каталог туров и отелей — клиент турфирмы."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.5
+  go_router: ^14.8.1
+  shared_preferences: ^2.5.3
+  dio: ^5.8.0+1
+  flutter_web_plugins:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
